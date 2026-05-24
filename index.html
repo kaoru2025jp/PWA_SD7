@@ -82,11 +82,6 @@ button:disabled{
     cursor:not-allowed;
 }
 
-/*
-========================
-ローディングスピナー
-========================
-*/
 .loading-overlay{
     display:none;
     position:fixed;
@@ -188,22 +183,14 @@ button:disabled{
 <div class="description">
 政府証券と民間銘柄の交換差額を計算します。<br><br>
 
-本アプリでは、計算の対象として「銘柄」と「政府証券」の交換関係を想定しています。
-
-市場価格だけでなく、オプション価格を通じた調整メカニズムに着目することで、証券市場外取引（OTC）においても実装可能な取引構造を、利用者自身が計算を通じて直感的に体感できる設計となっています。
-
-単なる数値計算ではなく、資産交換の背後にある価格形成や調整過程を可視化し、「政府証券」と「銘柄」がどのような関係性の中で交換可能性を持ち得るのかを理解するためのシミュレーション環境として位置付けています。
+市場価格だけでなく、オプション価格を通じた調整メカニズムをシミュレーションできます。
 </div>
 
-<!-- 入力 -->
 <div class="input-box">
 
 <input id="B" type="number" placeholder="B">
-
 <input id="S" type="number" placeholder="S">
-
 <input id="T1" type="number" placeholder="T1">
-
 <input id="T2" type="number" placeholder="T2">
 
 <hr>
@@ -224,7 +211,6 @@ placeholder="TX3">
 
 </div>
 
-<!-- ボタン -->
 <div class="button-group">
 
 <button
@@ -242,7 +228,6 @@ onclick="resetForm()">
 
 </div>
 
-<!-- ローディング -->
 <div id="loadingOverlay" class="loading-overlay">
 
 <div class="spinner"></div>
@@ -253,7 +238,6 @@ GAS通信中...
 
 </div>
 
-<!-- 結果 -->
 <div class="result">
 
 <h3>計算結果</h3>
@@ -315,7 +299,6 @@ B2 :
 
 </div>
 
-<!-- スライダー -->
 <div class="slider-area">
 
 <h3>シミュレーション</h3>
@@ -343,7 +326,6 @@ V1/V2 ↔ V2/V1 の範囲を
 
 </div>
 
-<!-- 履歴 -->
 <div class="history">
 
 <h3>計算履歴</h3>
@@ -366,6 +348,23 @@ const GAS_URL =
 
 let historyData = [];
 let fixedB = 0;
+
+/*
+========================
+小数点3桁関数
+========================
+*/
+function formatNumber(value){
+
+    if(
+        isNaN(value) ||
+        !isFinite(value)
+    ){
+        return "-";
+    }
+
+    return Number(value).toFixed(3);
+}
 
 /*
 ========================
@@ -395,9 +394,6 @@ async function calc(){
     const TX3 =
     Number(document.getElementById("TX3").value);
 
-    /*
-    入力チェック
-    */
     if(
         isNaN(B) ||
         isNaN(S) ||
@@ -413,25 +409,14 @@ async function calc(){
 
     fixedB = B;
 
-    /*
-    ローディング表示
-    */
     document.getElementById("loadingOverlay")
     .style.display = "flex";
 
-    /*
-    ボタン無効化
-    */
     document.getElementById("calcBtn")
     .disabled = true;
 
     try{
 
-        /*
-        ========================
-        GAS通信
-        ========================
-        */
         const res =
         await fetch(
             GAS_URL,
@@ -446,9 +431,6 @@ async function calc(){
             }
         );
 
-        /*
-        通信失敗
-        */
         if(!res.ok){
             throw new Error("通信失敗");
         }
@@ -456,32 +438,23 @@ async function calc(){
         const data =
         await res.json();
 
-        /*
-        O1 O2
-        */
         const O1 =
         Number(data.O1);
 
         const O2 =
         Number(data.O2);
 
-        /*
-        基本計算
-        */
         const result =
         S - B + O1 + O2;
 
-        /*
-        表示
-        */
         document.getElementById("O1")
-        .textContent = O1;
+        .textContent = formatNumber(O1);
 
         document.getElementById("O2")
-        .textContent = O2;
+        .textContent = formatNumber(O2);
 
         document.getElementById("result")
-        .textContent = result;
+        .textContent = formatNumber(result);
 
         /*
         ========================
@@ -498,10 +471,10 @@ async function calc(){
         O2 / denominator;
 
         document.getElementById("V1")
-        .textContent = V1;
+        .textContent = formatNumber(V1);
 
         document.getElementById("V2")
-        .textContent = V2;
+        .textContent = formatNumber(V2);
 
         /*
         比率
@@ -513,15 +486,13 @@ async function calc(){
         V2 / V1;
 
         document.getElementById("ratio1")
-        .textContent = ratio1;
+        .textContent = formatNumber(ratio1);
 
         document.getElementById("ratio2")
-        .textContent = ratio2;
+        .textContent = formatNumber(ratio2);
 
         /*
-        ========================
-        スライダー設定
-        ========================
+        スライダー
         */
         const slider =
         document.getElementById("ratioSlider");
@@ -535,15 +506,10 @@ async function calc(){
         slider.value =
         ratio1;
 
-        /*
-        初回シミュレーション
-        */
         updateSimulation();
 
         /*
-        ========================
-        履歴追加
-        ========================
+        履歴
         */
         addHistory({
             B,
@@ -569,15 +535,9 @@ async function calc(){
 
     }finally{
 
-        /*
-        ローディング非表示
-        */
         document.getElementById("loadingOverlay")
         .style.display = "none";
 
-        /*
-        ボタン有効化
-        */
         document.getElementById("calcBtn")
         .disabled = false;
     }
@@ -597,11 +557,9 @@ function updateSimulation(){
     Number(slider.value);
 
     document.getElementById("sliderValue")
-    .textContent = ratio;
+    .textContent =
+    formatNumber(ratio);
 
-    /*
-    B固定
-    */
     const B1 =
     fixedB * ratio;
 
@@ -609,10 +567,12 @@ function updateSimulation(){
     fixedB * (1 / ratio);
 
     document.getElementById("B1")
-    .textContent = B1;
+    .textContent =
+    formatNumber(B1);
 
     document.getElementById("B2")
-    .textContent = B2;
+    .textContent =
+    formatNumber(B2);
 }
 
 /*
@@ -689,61 +649,61 @@ function addHistory(item){
 
         <div>
         <span class="label">B:</span>
-        ${data.B}
+        ${formatNumber(data.B)}
         </div>
 
         <div>
         <span class="label">S:</span>
-        ${data.S}
+        ${formatNumber(data.S)}
         </div>
 
         <div>
         <span class="label">T1:</span>
-        ${data.T1}
+        ${formatNumber(data.T1)}
         </div>
 
         <div>
         <span class="label">T2:</span>
-        ${data.T2}
+        ${formatNumber(data.T2)}
         </div>
 
         <div>
         <span class="label">O1:</span>
-        ${data.O1}
+        ${formatNumber(data.O1)}
         </div>
 
         <div>
         <span class="label">O2:</span>
-        ${data.O2}
+        ${formatNumber(data.O2)}
         </div>
 
         <div>
         <span class="label">
         S-B+O1+O2:
         </span>
-        ${data.result}
+        ${formatNumber(data.result)}
         </div>
 
         <hr>
 
         <div>
         <span class="label">V1:</span>
-        ${data.V1}
+        ${formatNumber(data.V1)}
         </div>
 
         <div>
         <span class="label">V2:</span>
-        ${data.V2}
+        ${formatNumber(data.V2)}
         </div>
 
         <div>
         <span class="label">V1/V2:</span>
-        ${data.ratio1}
+        ${formatNumber(data.ratio1)}
         </div>
 
         <div>
         <span class="label">V2/V1:</span>
-        ${data.ratio2}
+        ${formatNumber(data.ratio2)}
         </div>
         `;
 
